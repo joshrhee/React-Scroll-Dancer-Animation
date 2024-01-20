@@ -8,7 +8,7 @@ import {
     useTexture
 } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
-import { useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useRecoilValue } from "recoil";
 import { IsEnteredAtom } from "../stores/index.js";
 import { Loader } from "./Loader.jsx";
@@ -35,6 +35,9 @@ export const Dancer = () => {
 
     const { actions } = useAnimations(animations, dancerRef);
 
+    const [currentAnimation, setCurrentAnimation] = useState("wave");
+    const [rotateFinished, setRotateFinished] = useState(false);
+
     const { positions } = useMemo(() => {
         const count = 500;
         const positions = new Float32Array(count * 3);
@@ -50,13 +53,52 @@ export const Dancer = () => {
         if (!isEntered) return;
 
         timeline.seek(scroll.offset * timeline.duration());
+        boxRef.current.material.color = new THREE.Color(
+            colors.boxMaterialColor
+        );
+
+        if (rotateFinished) {
+            setCurrentAnimation("breakdancingEnd");
+        } else {
+            setCurrentAnimation("wave");
+        }
     });
 
     useEffect(() => {
         if (!isEntered) return;
-
+        three.camera.lookAt(1, 2, 0);
         actions["wave"].play();
-    }, [actions, isEntered]);
+        three.scene.background = new THREE.Color(colors.boxMaterialColor);
+        scene.traverse((obj) => {
+            if (obj.isMesh) {
+                obj.castShadow = true;
+                obj.receiveShadow = true;
+            }
+        });
+    }, [actions, isEntered, scene, three.camera, three.scene]);
+
+    useEffect(() => {
+        let timeout;
+        if (currentAnimation === "wave") {
+            actions[currentAnimation]?.reset().fadeIn(0.5).play();
+        } else {
+            actions[currentAnimation]
+                ?.reset()
+                .fadeIn(0.5)
+                .play()
+                .setLoop(THREE.LoopOnce, 1);
+        }
+
+        timeout = setTimeout(() => {
+            if (actions[currentAnimation]) {
+                actions[currentAnimation].paused = true;
+            }
+        }, 8000);
+
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [actions, currentAnimation]);
 
     useEffect(() => {
         if (!isEntered) return;
@@ -86,7 +128,37 @@ export const Dancer = () => {
                 z: 0
             }
         );
-    }, [isEntered, three.camera.position]);
+
+        gsap.fromTo(
+            colors,
+            { boxMaterialColor: "#0C0400" },
+            { duration: 2.5, boxMaterialColor: "#DC4F00" }
+        );
+
+        gsap.to(startGroupRef01.current, {
+            yoyo: true, // animation played and played in reverse and play and so forth
+            duration: 2,
+            repeat: -1, //repeat infinitely
+            ease: "linear",
+            size: 0.05
+        });
+
+        gsap.to(startGroupRef02.current, {
+            yoyo: true,
+            duration: 3,
+            repeat: -1,
+            ease: "linear",
+            size: 0.05
+        });
+
+        gsap.to(startGroupRef03.current, {
+            yoyo: true,
+            duration: 4,
+            repeat: -1,
+            ease: "linear",
+            size: 0.05
+        });
+    }, [isEntered, three.camera.position, three.camera.rotation]);
 
     useEffect(() => {
         if (!isEntered) return;
