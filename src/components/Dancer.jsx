@@ -87,16 +87,17 @@ export const Dancer = () => {
                 .fadeIn(0.5)
                 .play()
                 .setLoop(THREE.LoopOnce, 1);
-        }
 
-        timeout = setTimeout(() => {
-            if (actions[currentAnimation]) {
-                actions[currentAnimation].paused = true;
-            }
-        }, 8000);
+            timeout = setTimeout(() => {
+                if (actions[currentAnimation]) {
+                    actions[currentAnimation].paused = true;
+                }
+            }, 8000);
+        }
 
         return () => {
             clearTimeout(timeout);
+            actions[currentAnimation]?.reset().fadeOut(0.5).stop();
         };
     }, [actions, currentAnimation]);
 
@@ -163,6 +164,12 @@ export const Dancer = () => {
     useEffect(() => {
         if (!isEntered) return;
         if (!dancerRef.current) return;
+
+        const pivot = new THREE.Group();
+        pivot.position.copy(dancerRef.current.position);
+        pivot.add(three.camera);
+        three.scene.add(pivot);
+
         timeline = gsap.timeline();
         timeline
             .from(
@@ -190,6 +197,27 @@ export const Dancer = () => {
                 },
                 "<"
             )
+            .to(
+                colors,
+                {
+                    duration: 10,
+                    boxMaterialColor: "#0C0400"
+                },
+                "<"
+            )
+            .to(pivot.rotation, {
+                duration: 10,
+                y: Math.PI
+            })
+            .to(
+                three.camera.position,
+                {
+                    duration: 10,
+                    x: -4,
+                    z: 12
+                },
+                "<"
+            )
             .to(three.camera.position, {
                 duration: 10,
                 x: 0,
@@ -198,9 +226,34 @@ export const Dancer = () => {
             .to(three.camera.position, {
                 duration: 10,
                 x: 0,
-                z: 16
+                z: 16,
+                onUpdate: () => {
+                    setRotateFinished(false);
+                }
+            })
+            .to(hemisphereLightRef.current, {
+                duration: 5,
+                intensity: 30
+            })
+            .to(
+                pivot.rotation,
+                {
+                    duration: 15,
+                    y: Math.PI * 4,
+                    onUpdate: () => {
+                        setRotateFinished(true);
+                    }
+                },
+                "<"
+            )
+            .to(colors, {
+                boxMaterialColor: "#DC4F00"
             });
-    }, [isEntered, three.camera.position]);
+
+        return () => {
+            three.scene.remove(pivot);
+        };
+    }, [isEntered, three.camera.position, three.scene]);
 
     if (isEntered) {
         return (
