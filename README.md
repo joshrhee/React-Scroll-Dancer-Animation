@@ -1,5 +1,8 @@
-### 실행방법
+# React + Vite
 
-1. `npm install` 명령어로 라이브러리 설치
-2. `npm run dev` 명령어로 실행
-3. 하단 url로 접속(아마`http://localhost:5173/` 일 것임)
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+-   [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
+-   [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
